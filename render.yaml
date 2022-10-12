@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: newsflow
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python -c "import nltk; nltk.download('vader_lexicon')"
+    startCommand: gunicorn app:server --bind 0.0.0.0:$PORT --workers 2 --preload
+    envVars:
+      - key: NEWS_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.8
