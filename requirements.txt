@@ -10,8 +10,6 @@ pandas
 numpy
 seaborn
 matplotlib
-flask==2.0.3
-werkzeug==2.0.3
 
 # Required for deployment on Heroku
 gunicorn==20.1.0
