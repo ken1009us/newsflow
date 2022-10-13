@@ -1,10 +1,12 @@
 import dash_bootstrap_components as dbc
-import nltk
+import dash
 
 from dash import dcc, Input, Output, html, State
 from dashNews import outline
 
-nltk.data.path.append('nltk_data')
+app = dash.Dash(
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -28,7 +30,7 @@ navbar = dbc.Navbar(
     dark=True,
 )
 
-outline.app.layout =  html.Div(
+app.layout =  html.Div(
         [
             navbar,
             dbc.Row([html.H1("Top News Articles",id="title")], style={'marginLeft': 10, 'marginBottom': 10, 'marginTop': 25,
@@ -48,7 +50,7 @@ outline.app.layout =  html.Div(
         ]
     )
 
-@outline.app.callback(
+@app.callback(
         [Output('accordion', 'children'), Output('tweetList', 'children'), Output('title', 'children'), Output('set_graph','figure')],
         Input("searchButton", 'n_clicks'),
         State("searchField", "value"),
@@ -86,4 +88,4 @@ def updatePage(n_clicks, searchVal, countryVal):
 
 if __name__ == "__main__":
     # host="0.0.0.0", port="8050"
-    outline.app.run_server(debug=False,host="0.0.0.0", port="8050")
+    app.run_server(debug=False,host="0.0.0.0", port="8050")

@@ -5,23 +5,15 @@ from pprint import pprint
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from dashNews.tweets import get_trending_tweets, get_countries
 
-import dash
 import dash_bootstrap_components as dbc
 import math
 import pandas as pd
 import numpy as np
-import nltk
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 import plotly.graph_objects as go
 
-
-nltk.downloader.download('vader_lexicon')
-
-app = dash.Dash(
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
-)
 
 countries = get_countries()
 alpha_countries = []
