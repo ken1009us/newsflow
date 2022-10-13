@@ -58,7 +58,6 @@ app.layout =  html.Div(
     )
 
 def updatePage(n_clicks, searchVal, countryVal):
-    print("update")
     new_title, tweets_title = outline.setVars(countryVal, searchVal)
     top = outline.top
     news_articles = []

@@ -43,7 +43,6 @@ def get_trending_tweets(country_code):
 
     tweets = requests.get(
         "https://api.twitter.com/1.1/trends/place.json", headers=trend_headers, params=trend_params).json()
-    print(tweets)
     return tweets[0]['trends']
 
 
