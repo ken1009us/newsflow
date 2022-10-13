@@ -1,7 +1,10 @@
 import dash_bootstrap_components as dbc
+import nltk
 
 from dash import dcc, Input, Output, html, State
 from dashNews import outline
+
+nltk.data.path.append('nltk_data')
 
 navbar = dbc.Navbar(
     dbc.Container(
