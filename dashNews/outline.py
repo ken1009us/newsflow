@@ -40,9 +40,10 @@ news_dict = {}
 
 def generateChart(top):
     headlines = set()
-
+    sourceListDf = []
     for title in top['articles']:
         headlines.add(title['title'])
+        sourceListDf.append(title['source']['name'])
 
     sia = SIA()
     headlinesResults = []
@@ -51,10 +52,8 @@ def generateChart(top):
         pol_score_h = sia.polarity_scores(line)
         pol_score_h['headline'] = line
         headlinesResults.append(pol_score_h)
+
     headlineDf = pd.DataFrame.from_records(headlinesResults)
-    sourceListDf = []
-    for source in top['articles']:
-        sourceListDf.append(source['source']['name'])
     headlineDf["source"] = sourceListDf
     headSent = px.scatter(headlineDf, x="pos", y="neg", color="source", labels={"pos":"Positive","neg":"Negative"})
     headSent.update_traces(marker=dict(size=12),
@@ -75,14 +74,11 @@ def setVars(location, query):
     if location is None:
         tweets = default_tweets
     else:
-        print(countries)
         if location in tweets_dict:
-            print("used dict")
             tweets = tweets_dict[location]
         else:
             tweets = get_trending_tweets(countries[location]["twitterid"])
             tweets_dict[location] = tweets
-        print(tweets)
         tweets_res = "Trending Tweets from {}".format(location)
 
     if query is not None and location is not None:
@@ -101,7 +97,6 @@ def setVars(location, query):
             query = None
 
     if query is None and location is not None:
-        print(countries[location]["newsid"])
         if location in news_dict:
             top = news_dict[location]
         else:
@@ -116,7 +111,6 @@ def setVars(location, query):
     if not top['articles']:
         top = default_top
         search_res = "Top News Articles Worldwide"
-    print(top)
 
     return search_res, tweets_res
 
