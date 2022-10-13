@@ -85,7 +85,6 @@ def updatePage(n_clicks, searchVal, countryVal):
     return news_articles, hold_tweet_list, new_title, outline.generateChart(top)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # host="0.0.0.0", port="8050"
-    # app.run_server(debug=False, host="0.0.0.0", port="8050")
-	app.run_server()
+    app.run_server(debug=False, host="0.0.0.0", port="8050")
