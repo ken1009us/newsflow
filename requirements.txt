@@ -10,3 +10,5 @@ pandas
 numpy
 seaborn
 matplotlib
+flask==2.0.3
+werkzeug==2.0.3
