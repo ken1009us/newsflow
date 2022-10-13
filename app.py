@@ -6,6 +6,7 @@ from dashNews import outline
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
+app.title = "NewsFlow"
 
 navbar = dbc.Navbar(
     dbc.Container(
