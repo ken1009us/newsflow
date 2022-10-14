@@ -43,6 +43,7 @@ def get_trending_tweets(country_code):
 
     tweets = requests.get(
         "https://api.twitter.com/1.1/trends/place.json", headers=trend_headers, params=trend_params).json()
+
     return tweets[0]['trends']
 
 
@@ -67,4 +68,5 @@ def get_countries():
             news_twitter_dict[place["country"]] = {}
             news_twitter_dict[place["country"]]["newsid"] = countryCode.lower()
             news_twitter_dict[place["country"]]["twitterid"] = place["woeid"]
+
     return news_twitter_dict
