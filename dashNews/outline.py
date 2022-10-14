@@ -79,6 +79,7 @@ def setVars(location, query):
         else:
             tweets = get_trending_tweets(countries[location]["twitterid"])
             tweets_dict[location] = tweets
+
         tweets_res = "Trending Tweets from {}".format(location)
 
     if query is not None and location is not None:
@@ -180,7 +181,7 @@ hold_tweet_list.append(dbc.ListGroupItem([
 ]), )
 
 for i in range(10):
-    hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], href=tweets[0]['url']))
+    hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], href=tweets[i]['url']))
 
 tweetList = dbc.ListGroup(
     hold_tweet_list,
