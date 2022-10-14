@@ -11,7 +11,11 @@ app.title = "NewsFlow"
 navbar = dbc.Navbar(
     dbc.Container(
         [
-            html.A('NewsFlow', style={'font-family': 'Kaushan Script','color': 'white', 'fontSize': 45, 'font-weight': 'bold', 'marginRight': 150,
+            html.A('NewsFlow', style={'font-family': 'Kaushan Script',
+                                      'color': 'white',
+                                      'fontSize': 45,
+                                      'font-weight': 'bold',
+                                      'marginRight': 150,
                                       'padding-right': 60}),
 
 
@@ -51,7 +55,10 @@ app.layout =  html.Div(
     )
 
 @app.callback(
-        [Output('accordion', 'children'), Output('tweetList', 'children'), Output('title', 'children'), Output('set_graph','figure')],
+        [Output('accordion', 'children'),
+         Output('tweetList', 'children'),
+         Output('title', 'children'),
+         Output('set_graph','figure')],
         Input("searchButton", 'n_clicks'),
         State("searchField", "value"),
         State("country", "value")
@@ -80,7 +87,7 @@ def updatePage(n_clicks, searchVal, countryVal):
     ])]
 
     for i in range(10):
-        hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], href=tweets[0]['url']))
+        hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], href=tweets[i]['url'], external_link=True))
 
     return news_articles, hold_tweet_list, new_title, outline.generateChart(top)
 
