@@ -18,13 +18,14 @@ navbar = dbc.Navbar(
                                       'marginRight': 150,
                                       'padding-right': 60}),
 
-
             dbc.Col(dbc.Input(id="searchField", placeholder="News topics", size="md", className="mb-3",
                               style={'width': 500, 'height': 40, 'marginTop': 20, 'marginRight': 20}), width="auto"),
+            
             dbc.Col(dcc.Dropdown(outline.items, id="country", placeholder="Country", style={'height': 40,
-                                                                                                'marginRight': 20,
-                                                                                                'marginTop': 4}),
+                                                                                            'marginRight': 20,
+                                                                                            'marginTop': 4}),
                     width=3),
+            
             dbc.Col(dbc.Button("Go!", id="searchButton", className="me-2", n_clicks=0, style={'width': 60,
                                                                                               'height': 40})),
 
@@ -37,8 +38,10 @@ navbar = dbc.Navbar(
 app.layout =  html.Div(
         [
             navbar,
-            dbc.Row([html.H1("Top News Articles",id="title")], style={'marginLeft': 10, 'marginBottom': 10, 'marginTop': 25,
-                                                           'font-weight': 1000}),
+            dbc.Row([html.H1("Top News Articles",id="title")], style={'marginLeft': 10, 
+                                                                      'marginBottom': 10, 
+                                                                      'marginTop': 25,
+                                                                      'font-weight': 1000}),
             dbc.Row(
                 [
                     outline.newsCards,
@@ -49,7 +52,20 @@ app.layout =  html.Div(
             dbc.Row(
                 [
                     dcc.Graph(id='set_graph',figure=outline.generateChart(outline.top)),
-                ]
+                ],
+                style={'marginRight': 20},
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        html.Div("© HackIllinois 2022, University of Illinois Urbana-Champaign, Author: Shu-Hao (Ken) Wu"),
+                        width={"size": 6, "offset": 2},
+                    ),
+                ],
+                align="center",
+                justify="center",
+                style={'marginTop': 10,
+                       'marginBottom': 10,},
             ),
         ]
     )
