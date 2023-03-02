@@ -1,9 +1,9 @@
 # List of the pip packages that must be installed for this project to work.
 # (Travis CI will install these before it tries running your Doctests.)
-newsapi-python
-dash~=2.2.0
+newsapi-python==0.2.7
+dash==2.2.0
 dash-bootstrap-components
-requests~=2.27.1
+requests==2.27.1
 IPython
 nltk
 pandas
