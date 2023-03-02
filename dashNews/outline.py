@@ -55,10 +55,13 @@ def generateChart(top):
 
     headlineDf = pd.DataFrame.from_records(headlinesResults)
     headlineDf["source"] = sourceListDf
-    headSent = px.scatter(headlineDf, x="pos", y="neg", color="source", labels={"pos":"Positive","neg":"Negative"})
-    headSent.update_traces(marker=dict(size=12),
-                           selector=dict(mode='markers'))
-    headSent.update_layout(title_text="Source Sentiment")
+    if not headlineDf.empty:
+        headSent = px.scatter(headlineDf, x="pos", y="neg", color="source", labels={"pos":"Positive","neg":"Negative"})
+        headSent.update_traces(marker=dict(size=12),
+                               selector=dict(mode='markers'))
+        headSent.update_layout(title_text="Source Sentiment")
+    else:
+        headSent = []
 
     return headSent
 
