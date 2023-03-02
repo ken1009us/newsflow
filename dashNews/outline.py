@@ -27,7 +27,7 @@ for location in alpha_countries:
     items.append(location)
 items.pop()
 
-api = NewsApiClient(api_key='77e164585ab1422893fc26ae68be9f05')
+api = NewsApiClient(api_key='202a98452ccb402784fa6cd0a7d3772a')
 
 default_top = api.get_top_headlines()
 top = api.get_top_headlines()
