@@ -55,18 +55,12 @@ app.layout =  html.Div(
                 ],
                 style={'marginRight': 20},
             ),
-            dbc.Row(
-                [
-                    dbc.Col(
-                        html.Div("© HackIllinois 2022, University of Illinois Urbana-Champaign, Author: Shu-Hao (Ken) Wu"),
-                        width={"size": 6, "offset": 2},
-                    ),
-                ],
-                align="center",
-                justify="center",
-                style={'marginTop': 10,
-                       'marginBottom': 10,},
-            ),
+
+            html.Div(children="© HackIllinois 2022, University of Illinois Urbana-Champaign, Author: Shu-Hao (Ken) Wu",
+                     style={
+                         'text-align':'center',
+                         'marginBottom': 20
+                     })
         ]
     )
 
