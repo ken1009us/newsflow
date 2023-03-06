@@ -184,10 +184,12 @@ hold_tweet_list.append(dbc.ListGroupItem([
 ]), )
 
 for i in range(10):
-    hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], href=tweets[i]['url']))
+    hold_tweet_list.append(dbc.ListGroupItem(tweets[i]['name'], 
+                                             href=tweets[i]['url'],
+                                             target='_blank'))
 
 tweetList = dbc.ListGroup(
     hold_tweet_list,
     style={"width": "20%","marginLeft":40},
-    id="tweetList",
+    id="tweetList"
 )
