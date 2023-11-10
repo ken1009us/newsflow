@@ -4,7 +4,7 @@ from dash import dcc, Input, Output, html, State
 from dashNews import outline
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
 app.title = "NewsFlow"
 
@@ -83,9 +83,53 @@ app.layout = html.Div(
             ],
             style={"marginRight": 20},
         ),
-        html.Div(
-            children="© NewsFlow 2023, Author: Shu-Hao (Ken) Wu",
-            style={"text-align": "center", "marginBottom": 20},
+        html.Footer(
+            children=[
+                html.P(
+                    "© NewsFlow 2023, Author: Shu-Hao (Ken) Wu",
+                    style={"marginTop": "15px"},
+                ),
+                html.A(
+                    html.Img(
+                        src="/assets/linkedin.png",
+                        style={"height": "30px", "width": "30px"},
+                    ),
+                    href="https://www.linkedin.com/in/shwu02",
+                    style={"marginLeft": "10px"},
+                    target="_blank",
+                ),
+                html.A(
+                    html.Img(
+                        src="/assets/github.png",
+                        style={"height": "30px", "width": "30px"},
+                    ),
+                    href="https://github.com/ken1009us",
+                    style={"marginLeft": "10px"},
+                    target="_blank",
+                ),
+                html.A(
+                    html.Img(
+                        src="/assets/portfolio.png",
+                        style={"height": "30px", "width": "30px"},
+                    ),
+                    href="https://portfolio-ken1009us.vercel.app/",
+                    style={"marginLeft": "10px"},
+                    target="_blank",
+                ),
+            ],
+            style={
+                "display": "flex",
+                "justifyContent": "center",
+                "alignItems": "center",
+                "padding": "20px",
+                "backgroundColor": "#333",
+                "color": "white",
+                "textAlign": "center",
+                # "position": "fixed",
+                "left": 0,
+                "bottom": 0,
+                "width": "100%",
+            },
         ),
     ]
 )
