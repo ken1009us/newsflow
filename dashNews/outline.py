@@ -10,7 +10,7 @@ from dashNews.util import get_countries
 
 
 def load_config():
-    with open("../config.json", "r") as config_file:
+    with open("./config.json", "r") as config_file:
         config = json.load(config_file)
 
     return config
