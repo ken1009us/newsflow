@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import json
+import os
 from typing import Tuple
 from newsapi import NewsApiClient
 from dash import html
@@ -9,16 +10,8 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from dashNews.util import get_countries
 
 
-def load_config():
-    with open("./config.json", "r") as config_file:
-        config = json.load(config_file)
-
-    return config
-
-
-config = load_config()
-api_key = config.get("newsapi_key", "default_api_key_if_not_set")
-api = NewsApiClient(api_key=api_key)
+news_api_key = os.environ.get("NEWS_API_KEY")
+api = NewsApiClient(api_key=news_api_key)
 
 countries = get_countries()
 alpha_countries = sorted(countries)
@@ -65,6 +58,7 @@ def generate_chart(top: dict) -> px.scatter:
             y="neg",
             color="source",
             labels={"pos": "Positive", "neg": "Negative"},
+            template="plotly_dark",
         )
         head_sent.update_traces(marker=dict(size=12), selector=dict(mode="markers"))
         head_sent.update_layout(title_text="Source Sentiment")
