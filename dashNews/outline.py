@@ -1,6 +1,7 @@
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+import json
 from typing import Tuple
 from newsapi import NewsApiClient
 from dash import html
@@ -8,7 +9,15 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from dashNews.util import get_countries
 
 
-api_key = "XXXXXXX"
+def load_config():
+    with open("./config.json", "r") as config_file:
+        config = json.load(config_file)
+
+    return config
+
+
+config = load_config()
+api_key = config.get("newsapi_key", "default_api_key_if_not_set")
 api = NewsApiClient(api_key=api_key)
 
 countries = get_countries()
