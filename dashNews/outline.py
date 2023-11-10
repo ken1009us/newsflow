@@ -1,34 +1,38 @@
-from newsapi import NewsApiClient
-from dash import dcc, Input, Output, html, State
-from IPython import display
-from pprint import pprint
-from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
-from dashNews.util import get_countries
-
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+from typing import Tuple
+from newsapi import NewsApiClient
+from dash import html
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
+from dashNews.util import get_countries
+
+
+api_key = "XXXXXXX"
+api = NewsApiClient(api_key=api_key)
 
 countries = get_countries()
-alpha_countries = []
-for country in countries:
-    alpha_countries.append(country)
+alpha_countries = sorted(countries)
 
-alpha_countries.sort()
+items = alpha_countries[:-1]
 
-items = []
-for location in alpha_countries:
-    items.append(location)
-items.pop()
+try:
+    default_top = api.get_top_headlines()
+except Exception as e:
+    print(f"Failed to fetch top headlines: {e}")
+    default_top = {"articles": []}
 
-api = NewsApiClient(api_key="XXXXXX")
-
-default_top = api.get_top_headlines()
-top = api.get_top_headlines()
+top = default_top
 news_dict = {}
 
 
-def generate_chart(top):
+def generate_chart(top: dict) -> px.scatter:
+    """
+    Generate a sentiment analysis scatter plot for the headlines.
+
+    :param top: A dictionary containing top headlines.
+    :return: A Plotly Express scatter plot object.
+    """
     headlines = set()
     source_list_df = []
     for title in top["articles"]:
@@ -61,7 +65,14 @@ def generate_chart(top):
     return head_sent
 
 
-def set_vars(location, query):
+def set_vars(location: str, query: str) -> Tuple[str, bool]:
+    """
+    Set the variables for location and query, returning the search result string and a boolean indicating if articles exist.
+
+    :param location: The selected location.
+    :param query: The search query.
+    :return: A tuple containing the search result string and a boolean indicating if articles exist.
+    """
     global top
     top = default_top
 
@@ -88,14 +99,20 @@ def set_vars(location, query):
     return search_res, articles_exist
 
 
-def generate_card(i):
+def generate_card(index: int) -> dbc.Card:
+    """
+    Generate a card component for an article.
+
+    :param index: The index of the article in the global 'top' variable.
+    :return: A Dash Bootstrap Components Card representing the article.
+    """
     card = dbc.Card(
         [
             dbc.Row(
                 [
                     dbc.Col(
                         dbc.CardImg(
-                            src=top["articles"][i]["urlToImage"],
+                            src=top["articles"][index]["urlToImage"],
                             className="img-fluid rounded-start",
                         ),
                         className="col-md-4",
@@ -104,12 +121,12 @@ def generate_card(i):
                         dbc.CardBody(
                             [
                                 html.H4(
-                                    top["articles"][i]["description"],
+                                    top["articles"][index]["description"],
                                     className="card-text",
                                 ),
                                 dbc.Button(
-                                    top["articles"][i]["source"]["name"],
-                                    href=top["articles"][i]["url"],
+                                    top["articles"][index]["source"]["name"],
+                                    href=top["articles"][index]["url"],
                                     target="_blank",
                                     external_link=True,
                                     color="primary",

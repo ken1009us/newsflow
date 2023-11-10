@@ -1,8 +1,8 @@
 import dash_bootstrap_components as dbc
 import dash
-
 from dash import dcc, Input, Output, html, State
 from dashNews import outline
+
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
@@ -100,32 +100,50 @@ app.layout = html.Div(
     [Input("searchButton", "n_clicks")],
     [State("searchField", "value"), State("country", "value")],
 )
-def update_page(n_clicks, searchVal, countryVal):
+def update_page(n_clicks: int, searchVal: str, countryVal: str) -> tuple:
+    """
+    Updates the page content based on the search value and country value.
+
+    :param n_clicks: The number of times the search button has been clicked.
+    :param searchVal: The value of the search input field.
+    :param countryVal: The value of the country dropdown.
+    :return: A tuple containing the new accordion children, title text, and graph figure.
+    """
     # if n_clicks is None or (searchVal is None or searchVal.strip() == ""):
     #     raise dash.exceptions.PreventUpdate
 
-    new_title, articles_exist = outline.set_vars(countryVal, searchVal)
-    if articles_exist:
-        top = outline.top
-        news_articles = []
-        for index, article in enumerate(top["articles"]):
-            news_articles.append(
+    try:
+        new_title, articles_exist = outline.set_vars(countryVal, searchVal)
+        if articles_exist:
+            top = outline.top
+            news_articles = [
                 dbc.AccordionItem(
                     outline.generate_card(index),
-                    title=top["articles"][index]["title"],
-                    item_id="item-{}".format(index),
+                    title=article["title"],
+                    item_id=f"item-{index}",
                 )
-            )
+                for index, article in enumerate(top["articles"])
+            ]
 
-        chart_figure = outline.generate_chart(top)
-    # If no articles, return an empty list and a message
-    else:
+            chart_figure = outline.generate_chart(top)
+        else:
+            news_articles = [
+                html.Div(
+                    "No articles found. Please try a different search or check your filters.",
+                    style={"textAlign": "center", "marginTop": "2rem"},
+                )
+            ]
+            chart_figure = {}
+    except Exception as e:
+        # If there's an error during the update, log it and provide a user-friendly message
+        print(f"Error updating the page: {e}")
         news_articles = [
             html.Div(
-                "No articles found. Please try a different search or check your filters.",
-                style={"textAlign": "center", "marginTop": "2rem"},
+                "An error occurred while fetching articles. Please try again later.",
+                style={"textAlign": "center", "marginTop": "2rem", "color": "red"},
             )
         ]
+        new_title = "Error"
         chart_figure = {}
 
     return news_articles, new_title, chart_figure
