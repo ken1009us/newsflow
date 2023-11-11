@@ -118,7 +118,7 @@ app.layout = html.Div(
                         src="/assets/portfolio.png",
                         style={"height": "30px", "width": "30px"},
                     ),
-                    href="https://portfolio-ken1009us.vercel.app/",
+                    href="https://www.ken-wu.com",
                     style={"marginLeft": "10px"},
                     target="_blank",
                 ),
