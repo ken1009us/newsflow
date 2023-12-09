@@ -97,7 +97,12 @@ app.layout = html.Div(
             [
                 dcc.Graph(id="set_graph", figure=outline.generate_chart(outline.top)),
             ],
-            style={"marginRight": 20, "marginLeft": 20},
+            style={
+                "marginRight": 20,
+                "marginLeft": 20,
+                "display": "flex",
+                "flex-wrap": "wrap",
+            },
         ),
         html.Footer(
             children=[
