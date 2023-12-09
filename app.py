@@ -4,7 +4,16 @@ from dash import dcc, Input, Output, html, State
 from dashNews import outline
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.DARKLY],
+    meta_tags=[
+        {
+            "name": "viewport",
+            "content": "width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0",
+        }
+    ],
+)
 server = app.server
 app.title = "NewsFlow"
 
@@ -29,7 +38,7 @@ navbar = dbc.Navbar(
                     size="md",
                     className="mb-3",
                     style={
-                        "width": 500,
+                        "width": 150,
                         "height": 40,
                         "marginTop": 20,
                         "marginRight": 20,
@@ -44,13 +53,14 @@ navbar = dbc.Navbar(
                     id="country",
                     placeholder="Country",
                     style={
+                        "width": 150,
                         "height": 40,
                         "marginRight": 20,
                         "marginTop": 4,
                         "color": "black",
                     },
                 ),
-                width=3,
+                width="auto",
             ),
             dbc.Col(
                 dbc.Button(
@@ -87,7 +97,7 @@ app.layout = html.Div(
             [
                 dcc.Graph(id="set_graph", figure=outline.generate_chart(outline.top)),
             ],
-            style={"marginRight": 20},
+            style={"marginRight": 20, "marginLeft": 20},
         ),
         html.Footer(
             children=[
@@ -159,8 +169,6 @@ def update_page(n_clicks: int, searchVal: str, countryVal: str) -> tuple:
     :param countryVal: The value of the country dropdown.
     :return: A tuple containing the new accordion children, title text, and graph figure.
     """
-    # if n_clicks is None or (searchVal is None or searchVal.strip() == ""):
-    #     raise dash.exceptions.PreventUpdate
 
     try:
         new_title, articles_exist = outline.set_vars(countryVal, searchVal)
@@ -185,7 +193,6 @@ def update_page(n_clicks: int, searchVal: str, countryVal: str) -> tuple:
             ]
             chart_figure = {}
     except Exception as e:
-        # If there's an error during the update, log it and provide a user-friendly message
         print(f"Error updating the page: {e}")
         news_articles = [
             html.Div(
