@@ -4,7 +4,7 @@ Newsflow is a web application that aggregates trending news articles and provide
 
 ![image](https://github.com/ken1009us/newsflow/blob/main/assets/homepage.png "homepage")
 
-#### Link:  <https://newsflow-website.herokuapp.com/>
+#### Link:  <http://www.newsflow-app.com/>
 
 ### Inspiration:
 With the overwhelming amount of information available online, staying updated with the latest news can be challenging. Newsflow was built to simplify this process by providing a user-friendly platform to access trending news and search for articles on topics of interest across different countries.
