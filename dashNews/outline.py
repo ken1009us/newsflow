@@ -35,22 +35,21 @@ def generate_chart(top: dict) -> px.scatter:
     :param top: A dictionary containing top headlines.
     :return: A Plotly Express scatter plot object.
     """
-    headlines = set()
-    source_list_df = []
-    for title in top["articles"]:
-        headlines.add(title["title"])
-        source_list_df.append(title["source"]["name"])
 
     sia = SIA()
     headlines_results = []
+    source_list_df = []
 
-    for line in headlines:
-        pol_score_h = sia.polarity_scores(line)
-        pol_score_h["headline"] = line
-        headlines_results.append(pol_score_h)
+    for article in top["articles"]:
+        title = article["title"]
+        pol_score = sia.polarity_scores(title)
+        pol_score["headline"] = title
+        headlines_results.append(pol_score)
+        source_list_df.append(article["source"]["name"])
 
     headline_df = pd.DataFrame.from_records(headlines_results)
     headline_df["source"] = source_list_df
+
     if not headline_df.empty:
         head_sent = px.scatter(
             headline_df,
