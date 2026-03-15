@@ -126,16 +126,7 @@ app.layout = html.Div(
                         ),
                         # Trends sidebar (4/12)
                         dbc.Col(
-                            [
-                                dcc.Loading(
-                                    id="loading-trends",
-                                    type="circle",
-                                    color="#6b9fd4",
-                                    children=[
-                                        html.Div(id="trends-sidebar"),
-                                    ],
-                                ),
-                            ],
+                            html.Div(id="trends-sidebar"),
                             lg=4,
                             md=12,
                         ),
@@ -189,7 +180,6 @@ def update_language_store(lang):
     [
         Output("news-timeline", "children"),
         Output("title", "children"),
-        Output("trends-sidebar", "children"),
         Output("fallback-notice", "children"),
         Output("wordcloud-container", "children"),
     ],
@@ -199,13 +189,9 @@ def update_language_store(lang):
         Input("language-store", "data"),
     ],
 )
-def update_page(search_val, country_val, lang):
+def update_news(search_val, country_val, lang):
     lang = lang or "en"
     lang_data = get_all(lang)
-
-    # Build trends sidebar
-    trends_data = get_trending_searches(country_val)
-    trends_component = build_trends_sidebar(trends_data, lang_data)
 
     fallback_notice = None
     wordcloud = None
@@ -294,13 +280,21 @@ def update_page(search_val, country_val, lang):
         )
         title = lang_data.get("error_title", "Error")
 
-    return (
-        timeline,
-        title,
-        trends_component,
-        fallback_notice,
-        wordcloud,
-    )
+    return (timeline, title, fallback_notice, wordcloud)
+
+
+@app.callback(
+    Output("trends-sidebar", "children"),
+    [
+        Input("country", "value"),
+        Input("language-store", "data"),
+    ],
+)
+def update_trends(country_val, lang):
+    lang = lang or "en"
+    lang_data = get_all(lang)
+    trends_data = get_trending_searches(country_val)
+    return build_trends_sidebar(trends_data, lang_data)
 
 
 @app.callback(
