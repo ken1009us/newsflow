@@ -1,141 +1,128 @@
+import time
 import dash_bootstrap_components as dbc
 from dash import html
 
-# Mapping from NewsAPI country codes to Google Trends geo/pn codes
-# Google Trends uses different identifiers for trending searches
-COUNTRY_TO_TRENDS_PN = {
-    "ar": "argentina",
-    "au": "australia",
-    "at": "austria",
-    "be": "belgium",
-    "br": "brazil",
-    "ca": "canada",
-    "co": "colombia",
-    "cz": "czech_republic",
-    "eg": "egypt",
-    "fr": "france",
-    "de": "germany",
-    "gr": "greece",
-    "hk": "hong_kong",
-    "hu": "hungary",
-    "in": "india",
-    "id": "indonesia",
-    "ie": "ireland",
-    "il": "israel",
-    "it": "italy",
-    "jp": "japan",
-    "kr": "south_korea",
-    "my": "malaysia",
-    "mx": "mexico",
-    "nl": "netherlands",
-    "nz": "new_zealand",
-    "ng": "nigeria",
-    "no": "norway",
-    "ph": "philippines",
-    "pl": "poland",
-    "pt": "portugal",
-    "ro": "romania",
-    "rs": "serbia",
-    "ru": "russia",
-    "sa": "saudi_arabia",
-    "sg": "singapore",
-    "za": "south_africa",
-    "se": "sweden",
-    "ch": "switzerland",
-    "tw": "taiwan",
-    "th": "thailand",
-    "tr": "turkey",
-    "ua": "ukraine",
-    "gb": "united_kingdom",
-    "us": "united_states",
-    "ve": "venezuela",
-}
+# In-memory cache: {geo: {"trends": [...], "timestamp": float}}
+_trends_cache = {}
+_CACHE_TTL = 300  # 5 minutes
 
 
-def get_trending_searches(country_code: str = None) -> list:
-    """Fetch Google trending searches for a given country.
-
-    Args:
-        country_code: NewsAPI-style country code (e.g. 'us', 'jp').
-                      Defaults to 'us' if None or not mapped.
+def get_trending_searches(country_code: str = None) -> dict:
+    """Fetch Google trending searches for a given country using trendspy.
 
     Returns:
-        A list of trending search strings, or empty list on error.
+        A dict with keys:
+        - "trends": list of trending search strings
+        - "error": None, "rate_limited", or "general_error"
     """
-    try:
-        from pytrends.request import TrendReq
+    geo = (country_code or "us").upper()
 
-        pytrends = TrendReq(hl="en-US", tz=360)
+    # Check cache
+    cached = _trends_cache.get(geo)
+    if cached and (time.time() - cached["timestamp"]) < _CACHE_TTL:
+        return {"trends": cached["trends"], "error": None}
 
-        pn = COUNTRY_TO_TRENDS_PN.get(country_code, "united_states")
-        df = pytrends.trending_searches(pn=pn)
+    # Try up to 2 times
+    for attempt in range(2):
+        try:
+            from trendspy import Trends
 
-        return df[0].tolist()[:20]
-    except Exception as e:
-        print(f"Google Trends error: {e}")
-        return []
+            tr = Trends()
+            trending = tr.trending_now(geo=geo)
+            trends = [item.keyword for item in trending][:20]
+
+            # Update cache
+            _trends_cache[geo] = {
+                "trends": trends,
+                "timestamp": time.time(),
+            }
+
+            return {"trends": trends, "error": None}
+
+        except Exception as e:
+            error_str = str(e).lower()
+            is_rate_limit = (
+                "429" in error_str
+                or "rate" in error_str
+                or "too many" in error_str
+            )
+
+            if is_rate_limit and attempt < 1:
+                time.sleep(2)
+                continue
+
+            print(f"Google Trends error (attempt {attempt + 1}): {e}")
+
+            error_type = "rate_limited" if is_rate_limit else "general_error"
+            return {"trends": [], "error": error_type}
+
+    return {"trends": [], "error": "general_error"}
 
 
-def build_trends_sidebar(trends: list, lang_data: dict = None) -> dbc.Card:
+def build_trends_sidebar(trends_data: dict, lang_data: dict = None) -> dbc.Card:
     """Build a sidebar card component displaying trending searches.
 
     Args:
-        trends: List of trending search strings.
+        trends_data: Dict with "trends" and "error" keys.
         lang_data: Translation dict for UI strings.
-
-    Returns:
-        A dbc.Card component for the sidebar.
     """
-    title = "Trending Searches"
-    if lang_data:
-        title = lang_data.get("trending_searches", title)
+    if lang_data is None:
+        lang_data = {}
 
-    if not trends:
-        no_data = "No trending data available."
-        if lang_data:
-            no_data = lang_data.get("no_trending_data", no_data)
-        body_content = [html.P(no_data, className="text-muted")]
-    else:
-        body_content = [
+    title = lang_data.get("trending_searches", "Trending Searches")
+    trends = trends_data.get("trends", [])
+    error = trends_data.get("error")
+
+    body_content = []
+
+    # Show error notice if applicable
+    if error == "rate_limited":
+        msg = lang_data.get(
+            "trends_rate_limited",
+            "Trending data is temporarily unavailable.",
+        )
+        body_content.append(
+            html.Div(msg, className="nf-trends-error")
+        )
+    elif error == "general_error" and not trends:
+        no_data = lang_data.get("no_trending_data", "No trending data available.")
+        body_content.append(
+            html.P(no_data, className="text-muted", style={"padding": "14px 18px"})
+        )
+
+    if trends:
+        import urllib.parse
+
+        body_content.append(
             dbc.ListGroup(
                 [
                     dbc.ListGroupItem(
-                        [
-                            html.Span(
-                                f"{i + 1}. ",
-                                style={"fontWeight": "bold", "marginRight": "8px"},
-                            ),
-                            html.Span(trend),
-                        ],
-                        style={
-                            "backgroundColor": "transparent",
-                            "border": "none",
-                            "borderBottom": "1px solid #444",
-                            "color": "white",
-                            "padding": "8px 12px",
-                        },
+                        html.A(
+                            [
+                                html.Span(f"{i + 1}", className="nf-trends-rank"),
+                                html.Span(trend),
+                            ],
+                            href=f"https://www.google.com/search?q={urllib.parse.quote_plus(trend)}",
+                            target="_blank",
+                        ),
+                        className="nf-trends-item",
                     )
                     for i, trend in enumerate(trends)
                 ],
                 flush=True,
             )
-        ]
+        )
 
     return dbc.Card(
         [
             dbc.CardHeader(
-                html.H5(title, className="mb-0", style={"color": "white"}),
-                style={"backgroundColor": "#375a7f"},
+                html.H5(title, className="mb-0"),
+                className="nf-trends-header",
             ),
             dbc.CardBody(
                 body_content,
-                style={
-                    "backgroundColor": "#303030",
-                    "maxHeight": "600px",
-                    "overflowY": "auto",
-                    "padding": "0",
-                },
+                className="nf-trends-body",
             ),
         ],
-        style={"border": "1px solid #444"},
+        className="nf-trends-card",
     )

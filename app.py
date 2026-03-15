@@ -4,8 +4,8 @@ from dash import dcc, Input, Output, html, State
 
 from dashNews.news_service import NewsService
 from dashNews.countries import get_country_options
-from dashNews.cards import generate_card
-from dashNews.charts import generate_sentiment_chart
+from dashNews.timeline import build_timeline
+from dashNews.wordcloud_gen import build_wordcloud_component
 from dashNews.trends import get_trending_searches, build_trends_sidebar
 from i18n import t, get_all
 
@@ -14,7 +14,10 @@ country_options = get_country_options()
 
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.DARKLY],
+    external_stylesheets=[
+        dbc.themes.DARKLY,
+        "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600;700&display=swap",
+    ],
     meta_tags=[
         {
             "name": "viewport",
@@ -31,198 +34,144 @@ language_options = [
     {"label": "日本語", "value": "ja"},
 ]
 
+# --- Navbar (sticky, instant search) ---
 navbar = dbc.Navbar(
     dbc.Container(
         [
-            html.A(
-                "NewsFlow",
+            html.A("NewsFlow", className="nf-navbar-brand", href="/"),
+            html.Div(
+                [
+                    dbc.Input(
+                        id="searchField",
+                        placeholder=t("search_placeholder"),
+                        size="md",
+                        debounce=True,
+                        className="nf-search-input",
+                        style={"width": "200px", "marginRight": "10px"},
+                    ),
+                    html.Div(
+                        dcc.Dropdown(
+                            options=country_options,
+                            id="country",
+                            placeholder=t("country_placeholder"),
+                            style={"width": "160px"},
+                        ),
+                        style={"marginRight": "10px"},
+                    ),
+                    html.Div(
+                        dcc.Dropdown(
+                            options=language_options,
+                            id="language-selector",
+                            value="en",
+                            clearable=False,
+                            style={"width": "120px"},
+                        ),
+                    ),
+                ],
                 style={
-                    "font-family": "Kaushan Script",
-                    "color": "white",
-                    "fontSize": 45,
-                    "font-weight": "bold",
-                    "marginRight": 50,
-                    "padding-right": 20,
+                    "display": "flex",
+                    "alignItems": "center",
+                    "flexWrap": "wrap",
+                    "gap": "4px",
                 },
             ),
-            dbc.Col(
-                dbc.Input(
-                    id="searchField",
-                    placeholder=t("search_placeholder"),
-                    size="md",
-                    className="mb-3",
-                    style={
-                        "width": 150,
-                        "height": 40,
-                        "marginTop": 20,
-                        "marginRight": 20,
-                        "color": "black",
-                    },
-                ),
-                width="auto",
-            ),
-            dbc.Col(
-                dcc.Dropdown(
-                    options=country_options,
-                    id="country",
-                    placeholder=t("country_placeholder"),
-                    style={
-                        "width": 150,
-                        "height": 40,
-                        "marginRight": 20,
-                        "marginTop": 4,
-                        "color": "black",
-                    },
-                ),
-                width="auto",
-            ),
-            dbc.Col(
-                dbc.Button(
-                    t("search_button"),
-                    id="searchButton",
-                    className="me-2",
-                    n_clicks=0,
-                    style={"width": 80, "height": 40},
-                ),
-                width="auto",
-            ),
-            dbc.Col(
-                dcc.Dropdown(
-                    options=language_options,
-                    id="language-selector",
-                    value="en",
-                    clearable=False,
-                    style={
-                        "width": 120,
-                        "height": 40,
-                        "marginTop": 4,
-                        "color": "black",
-                    },
-                ),
-                width="auto",
-            ),
         ],
+        fluid=True,
+        style={
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "space-between",
+            "maxWidth": "1200px",
+            "margin": "0 auto",
+            "padding": "0 16px",
+        },
     ),
-    color="dark",
-    dark=True,
+    className="nf-navbar",
 )
 
+# --- Main Layout ---
 app.layout = html.Div(
     [
         dcc.Store(id="language-store", data="en"),
         navbar,
-        dbc.Row(
-            [html.H1(t("top_news_title"), id="title")],
-            style={
-                "marginLeft": 10,
-                "marginBottom": 10,
-                "marginTop": 25,
-                "font-weight": 1000,
-            },
-        ),
-        dbc.Row(
+        html.Div(
             [
-                # Main news column (9/12)
-                dbc.Col(
+                # Fallback notice
+                html.Div(id="fallback-notice"),
+                # Section title
+                html.H3(
+                    t("top_news_title"),
+                    id="title",
+                    className="nf-section-title",
+                ),
+                # Word cloud (full width)
+                html.Div(id="wordcloud-container"),
+                # Main content row
+                dbc.Row(
                     [
-                        dcc.Loading(
-                            id="loading-news",
-                            type="circle",
-                            children=[
-                                dbc.Accordion(
-                                    id="accordion",
-                                    active_item="item-0",
-                                    flush=True,
-                                    style={"width": "100%"},
+                        # Timeline column (8/12)
+                        dbc.Col(
+                            [
+                                dcc.Loading(
+                                    id="loading-news",
+                                    type="circle",
+                                    color="#6b9fd4",
+                                    children=[
+                                        html.Div(id="news-timeline"),
+                                    ],
                                 ),
                             ],
+                            lg=8,
+                            md=12,
                         ),
-                    ],
-                    lg=9,
-                    md=12,
-                ),
-                # Trends sidebar column (3/12)
-                dbc.Col(
-                    [
-                        dcc.Loading(
-                            id="loading-trends",
-                            type="circle",
-                            children=[
-                                html.Div(id="trends-sidebar"),
+                        # Trends sidebar (4/12)
+                        dbc.Col(
+                            [
+                                dcc.Loading(
+                                    id="loading-trends",
+                                    type="circle",
+                                    color="#6b9fd4",
+                                    children=[
+                                        html.Div(id="trends-sidebar"),
+                                    ],
+                                ),
                             ],
+                            lg=4,
+                            md=12,
                         ),
-                    ],
-                    lg=3,
-                    md=12,
-                    style={"marginTop": "10px"},
-                ),
-            ],
-            style={"marginLeft": 5, "marginRight": 5},
-        ),
-        dbc.Row(
-            [
-                dcc.Loading(
-                    id="loading-chart",
-                    type="circle",
-                    children=[
-                        dcc.Graph(id="set_graph"),
                     ],
                 ),
             ],
             style={
-                "marginRight": 20,
-                "marginLeft": 20,
-                "display": "flex",
-                "flex-wrap": "wrap",
+                "maxWidth": "1200px",
+                "margin": "0 auto",
+                "padding": "0 16px 60px 16px",
             },
         ),
+        # Fixed Footer
         html.Footer(
             children=[
                 html.P(
                     t("footer_copyright"),
                     id="footer-text",
-                    style={"marginTop": "15px"},
                 ),
                 html.A(
-                    html.Img(
-                        src="/assets/linkedin.png",
-                        style={"height": "30px", "width": "30px"},
-                    ),
+                    html.Img(src="/assets/linkedin.png"),
                     href="https://www.linkedin.com/in/shwu02",
-                    style={"marginLeft": "10px"},
                     target="_blank",
                 ),
                 html.A(
-                    html.Img(
-                        src="/assets/github.png",
-                        style={"height": "30px", "width": "30px"},
-                    ),
+                    html.Img(src="/assets/github.png"),
                     href="https://github.com/ken1009us",
-                    style={"marginLeft": "10px"},
                     target="_blank",
                 ),
                 html.A(
-                    html.Img(
-                        src="/assets/portfolio.png",
-                        style={"height": "30px", "width": "30px"},
-                    ),
+                    html.Img(src="/assets/portfolio.png"),
                     href="https://www.ken-wu.com",
-                    style={"marginLeft": "10px"},
                     target="_blank",
                 ),
             ],
-            style={
-                "display": "flex",
-                "justifyContent": "center",
-                "alignItems": "center",
-                "padding": "20px",
-                "backgroundColor": "#333",
-                "color": "white",
-                "textAlign": "center",
-                "left": 0,
-                "bottom": 0,
-                "width": "100%",
-            },
+            className="nf-footer",
         ),
     ]
 )
@@ -238,33 +187,74 @@ def update_language_store(lang):
 
 @app.callback(
     [
-        Output("accordion", "children"),
+        Output("news-timeline", "children"),
         Output("title", "children"),
-        Output("set_graph", "figure"),
         Output("trends-sidebar", "children"),
+        Output("fallback-notice", "children"),
+        Output("wordcloud-container", "children"),
     ],
     [
-        Input("searchButton", "n_clicks"),
+        Input("searchField", "value"),
+        Input("country", "value"),
         Input("language-store", "data"),
     ],
-    [State("searchField", "value"), State("country", "value")],
 )
-def update_page(n_clicks, lang, search_val, country_val):
+def update_page(search_val, country_val, lang):
     lang = lang or "en"
     lang_data = get_all(lang)
 
+    # Build trends sidebar
+    trends_data = get_trending_searches(country_val)
+    trends_component = build_trends_sidebar(trends_data, lang_data)
+
+    fallback_notice = None
+    wordcloud = None
+
     try:
-        title, articles = news_service.search_news(
-            query=search_val,
-            country=country_val,
+        title, articles, fallback_type, original_country_name = (
+            news_service.search_news(query=search_val, country=country_val)
         )
 
+        if fallback_type and original_country_name:
+            if fallback_type == "everything":
+                notice_key = "country_fallback_everything"
+                default_msg = (
+                    "No top headlines for {country}. "
+                    "Showing recent news about {country} instead."
+                )
+            else:
+                notice_key = "country_fallback_notice"
+                default_msg = (
+                    "No results found for {country}. "
+                    "Showing worldwide results instead."
+                )
+            notice_text = lang_data.get(
+                notice_key, default_msg
+            ).replace("{country}", original_country_name)
+            fallback_notice = html.Div(
+                notice_text, className="nf-fallback-notice"
+            )
+
         if articles:
-            # Build localized title
             from config import NEWSAPI_SUPPORTED_COUNTRIES
 
             country_name = NEWSAPI_SUPPORTED_COUNTRIES.get(country_val, "")
-            if search_val and country_name:
+            if fallback_type == "worldwide":
+                title = lang_data.get("top_news_worldwide", title)
+                if search_val:
+                    title = lang_data.get(
+                        "top_news_with_query", title
+                    ).replace("{query}", search_val)
+            elif fallback_type == "everything":
+                title = lang_data.get(
+                    "news_about_country", "News about {country}"
+                ).replace("{country}", country_name)
+                if search_val:
+                    title = lang_data.get(
+                        "news_about_country_with_query",
+                        "News about {country} with '{query}'"
+                    ).replace("{country}", country_name).replace("{query}", search_val)
+            elif search_val and country_name:
                 title = lang_data.get(
                     "top_news_with_query_from_country", title
                 ).replace("{query}", search_val).replace("{country}", country_name)
@@ -279,53 +269,43 @@ def update_page(n_clicks, lang, search_val, country_val):
             else:
                 title = lang_data.get("top_news_worldwide", title)
 
-            news_articles = [
-                dbc.AccordionItem(
-                    generate_card(article),
-                    title=article.get("title") or lang_data.get(
-                        "no_description", "No title"
-                    ),
-                    item_id=f"item-{index}",
-                )
-                for index, article in enumerate(articles)
-            ]
-            chart_figure = generate_sentiment_chart(articles)
+            timeline = build_timeline(articles, lang_data)
+            wordcloud = build_wordcloud_component(articles)
         else:
             title = lang_data.get("no_articles_found", "No articles found.")
-            news_articles = [
-                html.Div(
-                    lang_data.get("no_articles_message", "No articles found."),
-                    style={"textAlign": "center", "marginTop": "2rem"},
-                )
-            ]
-            chart_figure = generate_sentiment_chart([])
-
-    except Exception as e:
-        print(f"Error updating the page: {e}")
-        news_articles = [
-            html.Div(
-                lang_data.get("error_message", "An error occurred."),
+            timeline = html.Div(
+                lang_data.get("no_articles_message", "No articles found."),
                 style={
                     "textAlign": "center",
                     "marginTop": "2rem",
-                    "color": "red",
+                    "color": "#8a8a88",
                 },
             )
-        ]
+
+    except Exception as e:
+        print(f"Error updating the page: {e}")
+        timeline = html.Div(
+            lang_data.get("error_message", "An error occurred."),
+            style={
+                "textAlign": "center",
+                "marginTop": "2rem",
+                "color": "#e25555",
+            },
+        )
         title = lang_data.get("error_title", "Error")
-        chart_figure = generate_sentiment_chart([])
 
-    # Build trends sidebar
-    trends = get_trending_searches(country_val)
-    trends_component = build_trends_sidebar(trends, lang_data)
-
-    return news_articles, title, chart_figure, trends_component
+    return (
+        timeline,
+        title,
+        trends_component,
+        fallback_notice,
+        wordcloud,
+    )
 
 
 @app.callback(
     [
         Output("searchField", "placeholder"),
-        Output("searchButton", "children"),
         Output("footer-text", "children"),
     ],
     Input("language-store", "data"),
@@ -335,7 +315,6 @@ def update_ui_text(lang):
     lang_data = get_all(lang)
     return (
         lang_data.get("search_placeholder", "News topics"),
-        lang_data.get("search_button", "Go!"),
         lang_data.get("footer_copyright", ""),
     )
 
