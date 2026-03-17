@@ -2,7 +2,10 @@ services:
   - type: web
     name: newsflow
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      mkdir -p assets/fonts
+      curl -L -o assets/fonts/NotoSansCJK.otf "https://github.com/notofonts/noto-cjk/raw/main/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf"
     startCommand: gunicorn app:server --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: NEWS_API_KEY
