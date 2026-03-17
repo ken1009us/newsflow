@@ -198,7 +198,9 @@ def update_news(search_val, country_val, lang):
 
     try:
         title, articles, fallback_type, original_country_name = (
-            news_service.search_news(query=search_val, country=country_val)
+            news_service.search_news(
+                query=search_val, country=country_val, lang=lang,
+            )
         )
 
         if fallback_type and original_country_name:
